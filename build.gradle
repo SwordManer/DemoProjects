@@ -1,0 +1,63 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.7.RELEASE")
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version '2.3.2.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id 'java'
+	id 'war'
+}
+
+group = 'com.ford.shanghai'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compile('org.springframework.cloud:spring-cloud-starter-openfeign')
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	compile "org.springframework.boot:spring-boot-starter-web"
+	compile "org.springframework.boot:spring-boot-starter-jdbc"
+
+	annotationProcessor 'org.projectlombok:lombok:1.18.2'  
+	compileOnly 'org.projectlombok:lombok:1.18.2'  
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.2'  
+	testCompileOnly 'org.projectlombok:lombok:1.18.2'
+
+	testCompile "junit:junit"
+	runtime "com.h2database:h2:1.4.200"
+	testCompile "com.h2database:h2:1.4.200"
+}
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Hoxton.SR7'
+	}
+}
+
+jar {
+	baseName = 'gs-rest-service'
+	version =  '0.1.0'
+}
+
+//test {
+//	useJUnitPlatform()
+//}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
