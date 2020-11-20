@@ -49,6 +49,8 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 				.map(Step::getStartLocation)
 				.collect(Collectors.toList());
 
+		
+		
 		List<CompletableFuture<List<PointOfInterest>>> searchingResultFutures = locations.stream().map(
 				loc -> CompletableFuture.supplyAsync(
 						() -> 
