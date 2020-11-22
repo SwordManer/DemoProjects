@@ -12,6 +12,7 @@ import com.ford.shanghai.finder.entity.WaysidePOIsEntity;
 import com.ford.shanghai.finder.request.POIRequest;
 import com.ford.shanghai.finder.request.PathPlanRequest;
 import com.ford.shanghai.finder.response.InterestPointResponse;
+import com.ford.shanghai.finder.response.utils.Response;
 import com.ford.shanghai.finder.service.InterestFinderService;
 
 @RestController
@@ -21,19 +22,19 @@ public class POIFinderController {
 	private InterestFinderService interestFinderService;
 
 	@RequestMapping(value = "/path/driving", method = RequestMethod.POST)
-	public InterestPointResponse fetchPathPlan(@RequestBody PathPlanRequest request) {
+	public Response<InterestPointResponse> fetchPathPlan(@RequestBody PathPlanRequest request) {
 
 		InterestPointEntity fetchPathPlan = interestFinderService.fetchPathPlan(request.getOrigin(), request.getDestination());
 		return null;
 	}
 
 	@RequestMapping(value = "/path/driving/poi", method = RequestMethod.POST)
-	public InterestPointResponse fetchPointsOfInterest(@RequestBody POIRequest request) {
+	public Response<InterestPointResponse> fetchPointsOfInterest(@RequestBody POIRequest request) {
 
 		WaysidePOIsEntity waysidePOIs = interestFinderService.fetchPOI(request.getOrigin(), request.getDestination(), request.getQuery());
 		InterestPointResponse response = new InterestPointResponse();
 		response.setInterestPoints(waysidePOIs.getSearchingResults());
-		return response;
+		return Response.buildSuccess(response);
 	}
 
 	@RequestMapping("/testSearching")

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ford.shanghai.finder.model.FinderRecordModel;
 import com.ford.shanghai.finder.response.FinderRecordResponse;
+import com.ford.shanghai.finder.response.utils.Response;
 import com.ford.shanghai.finder.service.FinderRecordService;
 
 @RestController
@@ -18,10 +19,10 @@ public class FinderRecordController {
 	private FinderRecordService finderRecordService;
 
 	@RequestMapping(value = "/records", method = RequestMethod.GET)
-	public FinderRecordResponse fetchPointsOfInterest() {
+	public Response<FinderRecordResponse> fetchPointsOfInterest() {
 		FinderRecordResponse response = new FinderRecordResponse();
 		List<FinderRecordModel> records = finderRecordService.fetchRecords();
 		response.setFinderRecords(records);
-		return response;
+		return Response.buildSuccess(response);
 	}
 }
