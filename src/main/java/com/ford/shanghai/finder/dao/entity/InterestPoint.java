@@ -10,6 +10,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import static com.ford.shanghai.finder.utils.Constants.JAVA_DATE_TIME_FMT;
@@ -23,13 +25,16 @@ import lombok.NoArgsConstructor;
 @Table(name = "interestpoint")
 @NoArgsConstructor
 @AllArgsConstructor
+@GenericGenerator(name = "jpa-uuid", strategy = "uuid")
 public class InterestPoint implements Serializable{
 
 	private static final long serialVersionUID = -3299616808519127354L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "jpa-uuid", strategy = GenerationType.AUTO)
+
+	private String id;
 
 	@Column(name = "channel")
 	private String channel;

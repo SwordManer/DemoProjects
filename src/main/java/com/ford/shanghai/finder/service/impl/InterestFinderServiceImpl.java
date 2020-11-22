@@ -2,6 +2,7 @@ package com.ford.shanghai.finder.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import com.ford.shanghai.finder.service.InterestFinderService;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
+import static com.ford.shanghai.finder.utils.Constants.CHANNEL_TYPE_BAIDUMAP;
 import static com.ford.shanghai.finder.utils.Constants.STATUS_SUCCESS;
 
 @Service
@@ -56,28 +59,36 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 	public WaysidePOIsEntity fetchPOI(String origin, String destination, String poiType) {
 
-		PathPlanResponse response = pathPlanFeignClient.fetchDrivingPathPlan(origin, destination, apiKey);
-		Integer status = Optional.of(response).map(PathPlanResponse::getStatus).get();
-		if (status!=STATUS_SUCCESS) {
-			return null;
+		WaysidePOIsEntity waysidePOIs = null;
+		try {
+			PathPlanResponse response = pathPlanFeignClient.fetchDrivingPathPlan(origin, destination, apiKey);
+			Integer status = Optional.of(response).map(PathPlanResponse::getStatus).get();
+			if (status!=STATUS_SUCCESS) {
+				return null;
+			}
+
+			List<Location> locations = Optional.of(response.getResult()).get()
+					.getRoutes().stream()
+					.flatMap(route -> route.getSteps().stream())
+					.map(Step::getStartLocation)
+					.collect(Collectors.toList());
+
+			Set<String> locs = locations.stream().map(Location::toString).collect(Collectors.toSet());
+			Set<PointOfInterest> poisFromDB = queryFromDBAndAssembly(poiType, locs);
+			Set<PointOfInterest> poisFromFeign = queryFromFeignAndAssembly(poiType, locs);
+			List<PointOfInterest> poiResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
+			waysidePOIs = new WaysidePOIsEntity();
+			waysidePOIs.setSearchingResults(poiResults);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-		List<Location> locations = Optional.of(response.getResult()).get()
-				.getRoutes().stream()
-				.flatMap(route -> route.getSteps().stream())
-				.map(Step::getStartLocation)
-				.collect(Collectors.toList());
-
-		Set<String> locs = locations.stream().map(Location::toString).collect(Collectors.toSet());
-		Set<PointOfInterest> poisFromDB = queryFromDBAndAssembly(poiType, locs);
-		Set<PointOfInterest> poisFromFeign = queryFromFeignAndAssembly(poiType, locs);
-		List<PointOfInterest> poiResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
-		WaysidePOIsEntity waysidePOIs = new WaysidePOIsEntity();
-		waysidePOIs.setSearchingResults(poiResults);
 		return waysidePOIs;
 	}
 
 	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {
+		if (StringUtils.isBlank(poiType)||locs==null||locs.isEmpty()) {
+			return Collections.emptySet();
+		}
 		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locs.stream().map(
 					loc -> CompletableFuture.supplyAsync( () -> fetchPOIsByFeign(poiType, loc.toString())))
 				.collect(Collectors.toSet());
@@ -89,10 +100,16 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 	}
 
 	private Set<PointOfInterest> queryFromDBAndAssembly(String poiType, Set<String> locs) {
+
+		if (StringUtils.isBlank(poiType)||locs==null||locs.isEmpty()) {
+			return Collections.emptySet();
+		}
+
 		Set<LocationInterestPoint> locationInterestPoints = locationInterestPointDAO.queryPOIsByLocs(poiType, locs);
 		Set<String> locsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getLocation).collect(Collectors.toSet());
+		Set<String> poiLocsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getPoiLocation).collect(Collectors.toSet());
 		locs.removeAll(locsInDB);
-		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, locsInDB);
+		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, poiLocsInDB);
 		Set<PointOfInterest> poisFromDB = InterestPointMapper.INSTANCE.toDomains(locPOIs);
 		return new HashSet<PointOfInterest>(poisFromDB);
 	}
@@ -110,7 +127,11 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 			return null;
 		}
 		List<PointOfInterest> pois = result.getResults();
-		Set<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(new HashSet<>( result.getResults()));
+		Set<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(new HashSet<>(result.getResults()));
+		interestPoints.forEach(ip -> {
+			ip.setChannel(CHANNEL_TYPE_BAIDUMAP);
+			ip.setPoiType(poiType);
+		});
 		interestPointDAO.saveAll(interestPoints);
 //		insert into the locationInterestPoint table:
 		LocationMapper mapper = new LocationMapper();
@@ -118,12 +139,12 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 				.map(poi -> {
 					LocationInterestPoint locIp = new LocationInterestPoint();
 					Location location = mapper.map2Location(loc);
-//					locIp.setId(id);
 					locIp.setLocation(loc);
 					locIp.setLocLatitude(location.getLat());
 					locIp.setLocLogitude(location.getLng());
 					locIp.setPoiType(poiType);
 					locIp.setPoiId(poi.getUid());
+					locIp.setPoiLocation(String.valueOf(poi.getLocation()));
 					locIp.setPoiLatitude(poi.getLocation().getLat());
 					locIp.setPoiLogitude(poi.getLocation().getLng());
 					locIp.setRadius(new BigDecimal("5000"));

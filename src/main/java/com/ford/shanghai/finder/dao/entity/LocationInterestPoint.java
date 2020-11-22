@@ -11,6 +11,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import static com.ford.shanghai.finder.utils.Constants.JAVA_DATE_TIME_FMT;
@@ -22,6 +24,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name = "location_interestpoint")
+@GenericGenerator(name = "jpa-uuid", strategy = "uuid")
 @NoArgsConstructor
 @AllArgsConstructor
 public class LocationInterestPoint implements Serializable{
@@ -29,8 +32,9 @@ public class LocationInterestPoint implements Serializable{
 	private static final long serialVersionUID = -3299616808519127354L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "jpa-uuid", strategy = GenerationType.AUTO)
+	private String id;
 	
 	@Column(name = "loc_latitude")
 	private BigDecimal locLatitude;
@@ -46,6 +50,9 @@ public class LocationInterestPoint implements Serializable{
 
 	@Column(name = "poi_type")
 	private String poiType;
+	
+	@Column(name = "poi_location")
+	private String poiLocation;
 
 	@Column(name = "poiLatitude")
 	private BigDecimal poiLatitude;
