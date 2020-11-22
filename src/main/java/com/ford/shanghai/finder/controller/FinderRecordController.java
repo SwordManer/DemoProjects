@@ -13,7 +13,7 @@ import com.ford.shanghai.finder.response.utils.Response;
 import com.ford.shanghai.finder.service.FinderRecordService;
 
 @RestController
-public class FinderRecordController {
+public class FinderRecordController extends AbstractController{
 
 	@Autowired
 	private FinderRecordService finderRecordService;

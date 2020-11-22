@@ -14,14 +14,14 @@ public abstract class AbstractControllerTest {
 
 	protected MockMvc mockMvc;
 
-	protected POIFinderController poiFinderController;
+	protected AbstractController controller;
 
 	protected String sourceString;
 
 	protected void setMvc(final String fileSrcPath) {
 		String filePath = Thread.currentThread().getContextClassLoader().getResource(fileSrcPath).getFile();
 		sourceString = IOUtil.readFromFile(filePath);
-		mockMvc = MockMvcBuilders.standaloneSetup(poiFinderController).build();
+		mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 	}
 	
 	protected void testRequest(final String requestUrl) throws Exception {

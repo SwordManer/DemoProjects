@@ -16,7 +16,7 @@ import com.ford.shanghai.finder.response.utils.Response;
 import com.ford.shanghai.finder.service.InterestFinderService;
 
 @RestController
-public class POIFinderController {
+public class POIFinderController extends AbstractController{
 
 	@Autowired
 	private InterestFinderService interestFinderService;

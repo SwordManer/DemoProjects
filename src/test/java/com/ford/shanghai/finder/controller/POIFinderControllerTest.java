@@ -33,6 +33,6 @@ public class POIFinderControllerTest extends AbstractControllerTest{
 
 	@Autowired
 	public void setPOIFinderController(POIFinderController poiFinderController) {
-		this.poiFinderController = poiFinderController;
+		this.controller = poiFinderController;
 	}
 }
