@@ -43,3 +43,17 @@ create table `LOCATION_INTERESTPOINT` (
 	`update_time` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
 	PRIMARY KEY (`id`)
 );
+
+drop table if exists `FINDERRECORD`;
+create table `FINDERRECORD` (
+	`id` varchar(50) NOT NULL COMMENT 'primary id',
+	`user_id` varchar(50) COMMENT 'user id',
+	`query_time` timestamp DEFAULT CURRENT_TIMESTAMP COMMENT 'query time',
+	`start_location` varchar(30) NOT NULL COMMENT 'start location with latitude and logitude',
+	`end_location` varchar(30) NOT NULL COMMENT 'end location with latitude and logitude',
+
+	`poi_type` varchar(30) COMMENT 'type of poi',
+	`create_time` timestamp DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+	`update_time` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+	PRIMARY KEY (`id`)
+);

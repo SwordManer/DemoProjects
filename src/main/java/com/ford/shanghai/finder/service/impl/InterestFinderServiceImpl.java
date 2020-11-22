@@ -3,6 +3,7 @@ package com.ford.shanghai.finder.service.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -15,8 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.ford.shanghai.finder.dao.FinderRecordDAO;
 import com.ford.shanghai.finder.dao.InterestPointDAO;
 import com.ford.shanghai.finder.dao.LocationInterestPointDAO;
+import com.ford.shanghai.finder.dao.entity.FinderRecord;
 import com.ford.shanghai.finder.dao.entity.InterestPoint;
 import com.ford.shanghai.finder.dao.entity.LocationInterestPoint;
 import com.ford.shanghai.finder.entity.InterestPointEntity;
@@ -48,6 +51,9 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 	@Autowired
 	private LocationInterestPointDAO locationInterestPointDAO;
 
+	@Autowired
+	private FinderRecordDAO finderRecordDAO;
+	
 	@Value("${api.map.baidu.apikey}")
 	private String apiKey;
 
@@ -77,12 +83,23 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 			Set<PointOfInterest> poisFromDB = queryFromDBAndAssembly(poiType, locs);
 			Set<PointOfInterest> poisFromFeign = queryFromFeignAndAssembly(poiType, locs);
 			List<PointOfInterest> poiResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
+
 			waysidePOIs = new WaysidePOIsEntity();
 			waysidePOIs.setSearchingResults(poiResults);
+			recordQueryInformation(origin, destination, poiType);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return waysidePOIs;
+	}
+
+	private void recordQueryInformation(String origin, String destination, String poiType) {
+		FinderRecord record = new FinderRecord();
+		record.setQueryTime(new Date());
+		record.setPoiType(poiType);
+		record.setStartLocation(origin);
+		record.setEndLocation(destination);
+		finderRecordDAO.save(record);
 	}
 
 	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {

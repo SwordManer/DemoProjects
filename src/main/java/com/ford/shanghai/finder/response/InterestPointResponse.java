@@ -7,7 +7,7 @@ import com.ford.shanghai.finder.feign.response.PointOfInterest;
 import lombok.Data;
 
 @Data
-public class InterestPointResponse {
+public class InterestPointResponse extends AbstractResponse {
 
 	private List<PointOfInterest> interestPoints;
 

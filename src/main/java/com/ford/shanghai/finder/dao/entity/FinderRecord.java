@@ -22,11 +22,11 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "interestpoint")
+@Table(name = "finderrecord")
 @NoArgsConstructor
 @AllArgsConstructor
 @GenericGenerator(name = "jpa-uuid", strategy = "uuid")
-public class InterestPoint implements Serializable{
+public class FinderRecord implements Serializable{
 
 	private static final long serialVersionUID = -3299616808519127354L;
 
@@ -34,41 +34,21 @@ public class InterestPoint implements Serializable{
 	@GeneratedValue(generator = "jpa-uuid", strategy = GenerationType.AUTO)
 	private String id;
 
-	@Column(name = "channel")
-	private String channel;
-	
 	@Column(name = "poi_type")
 	private String poiType;
 
-	@Column(name = "id_in_channel")
-	private String uid;
+	@Column(name = "user_id")
+	private String userId;
 
-	@Column(name = "name")
-	private String name;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = JAVA_DATE_TIME_FMT)
+	@Column(name = "query_time", insertable = false, updatable = false)
+	protected Date queryTime;
 
-	@Column(name = "location")
-	private String location;
+	@Column(name = "start_location")
+	private String startLocation;
 
-	@Column(name = "address")
-	private String address;
-
-	@Column(name = "province")
-	private String province;
-
-	@Column(name = "city")
-	private String city;
-
-	@Column(name = "area")
-	private String area;
-
-	@Column(name = "street_id")
-	private String streetId;
-
-	@Column(name = "telephone")
-	private String telephone;
-
-	@Column(name = "detail")
-	private Integer detail;
+	@Column(name = "end_location")
+	private String endLocation;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = JAVA_DATE_TIME_FMT)
     @Column(name = "create_time", insertable = false, updatable = false)
