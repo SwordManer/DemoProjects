@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -103,7 +102,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 	}
 
 	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {
-		if (StringUtils.isBlank(poiType)||locs==null||locs.isEmpty()) {
+		if (poiType==null||locs==null||locs.isEmpty()) {
 			return Collections.emptySet();
 		}
 		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locs.stream().map(
@@ -118,7 +117,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 	private Set<PointOfInterest> queryFromDBAndAssembly(String poiType, Set<String> locs) {
 
-		if (StringUtils.isBlank(poiType)||locs==null||locs.isEmpty()) {
+		if (poiType==null||locs==null||locs.isEmpty()) {
 			return Collections.emptySet();
 		}
 
