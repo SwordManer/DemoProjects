@@ -1,5 +1,6 @@
 package com.ford.shanghai.finder.service.impl;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.ford.shanghai.finder.feign.response.PointOfInterest;
 import com.ford.shanghai.finder.feign.response.SearchingResultResponse;
 import com.ford.shanghai.finder.feign.response.Step;
 import com.ford.shanghai.finder.mapper.InterestPointMapper;
+import com.ford.shanghai.finder.mapper.LocationMapper;
 import com.ford.shanghai.finder.service.InterestFinderService;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
@@ -111,6 +113,25 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 		List<PointOfInterest> pois = result.getResults();
 		List<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(result.getResults());
 		interestPointDAO.saveAll(interestPoints);
+//		insert into the locationInterestPoint table:
+		LocationMapper mapper = new LocationMapper();
+		Set<LocationInterestPoint> locIps = pois.stream()
+				.map(poi -> {
+					LocationInterestPoint locIp = new LocationInterestPoint();
+					Location location = mapper.map2Location(loc);
+//					locIp.setId(id);
+					locIp.setLocation(loc);
+					locIp.setLocLatitude(location.getLat());
+					locIp.setLocLogitude(location.getLng());
+					locIp.setPoiType(poiType);
+					locIp.setPoiId(poi.getUid());
+					locIp.setPoiLatitude(poi.getLocation().getLat());
+					locIp.setPoiLogitude(poi.getLocation().getLng());
+					locIp.setRadius(new BigDecimal("5000"));
+//					locIp.setDistance(distance);
+				return locIp; 
+			}).collect(Collectors.toSet());
+		locationInterestPointDAO.saveAll(locIps);
 		return new HashSet<PointOfInterest>(pois);
 	}
 

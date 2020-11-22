@@ -31,9 +31,6 @@ public class LocationInterestPoint implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@Column(name = "channel")
-	private String channel;
 	
 	@Column(name = "loc_latitude")
 	private BigDecimal locLatitude;

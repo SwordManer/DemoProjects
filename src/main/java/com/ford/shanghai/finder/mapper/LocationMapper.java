@@ -10,7 +10,7 @@ import com.ford.shanghai.finder.feign.response.Location;
 public class LocationMapper {
 
 	@Named("mapLoc2Location")
-	Location mapLocation(String loc) {
+	public Location map2Location(String loc) {
 		if (loc!=null&&!loc.isEmpty()) {
 			String[] cord = loc.split(",");
 			Location location = new Location();
@@ -22,7 +22,7 @@ public class LocationMapper {
 	}
 
 	@Named("mapLocation2Loc")
-	String mapLocation(Location location) {
+	public String map2Loc(Location location) {
 		if (location!=null) {
 			return location.toString();
 		}
