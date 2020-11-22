@@ -77,7 +77,6 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 		return waysidePOIs;
 	}
 
-
 	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {
 		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locs.stream().map(
 					loc -> CompletableFuture.supplyAsync( () -> fetchPOIsByFeign(poiType, loc.toString())))
@@ -95,7 +94,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 		locs.removeAll(locsInDB);
 		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, locsInDB);
 		Set<PointOfInterest> poisFromDB = InterestPointMapper.INSTANCE.toDomains(locPOIs);
-		return poisFromDB;
+		return new HashSet<PointOfInterest>(poisFromDB);
 	}
 
 	private List<PointOfInterest> mergeAndResolveSet(Set<PointOfInterest> poisFromDB,
@@ -111,7 +110,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 			return null;
 		}
 		List<PointOfInterest> pois = result.getResults();
-		List<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(result.getResults());
+		Set<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(new HashSet<>( result.getResults()));
 		interestPointDAO.saveAll(interestPoints);
 //		insert into the locationInterestPoint table:
 		LocationMapper mapper = new LocationMapper();

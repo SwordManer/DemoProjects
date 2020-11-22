@@ -1,6 +1,5 @@
 package com.ford.shanghai.finder.mapper;
 
-import java.util.List;
 import java.util.Set;
 
 import org.mapstruct.Mapper;
@@ -27,7 +26,7 @@ public interface InterestPointMapper {
 	})
 	public InterestPoint toDto(PointOfInterest poi);
 
-	public List<InterestPoint> toDtos(List<PointOfInterest> poi);
+	public Set<InterestPoint> toDtos(Set<PointOfInterest> poi);
 
 	@Mappings({
 		@Mapping(source = "location", target = "location", qualifiedByName = {"locationMapper", "mapLoc2Location"} )

@@ -14,6 +14,7 @@ public interface InterestPointDAO extends Repository<InterestPoint, Integer>, Cr
 	@Query(value = "select * from interestpoint ip where ip.poi_type=?1 and ip.location=?2", nativeQuery = true)
 	public Set<InterestPoint> queryPOIsByConditions(String query, String loc);
 
-	public Set<InterestPoint> queryPOIsByLocs(String poiType, Set<String> locsInDB);
+	@Query(value = "select * from interestpoint ip where ip.poi_type=?1 and ip.location in ?2", nativeQuery = true)
+	public Set<InterestPoint> queryPOIsByLocs(String poiType, Set<String> locs);
 
 }

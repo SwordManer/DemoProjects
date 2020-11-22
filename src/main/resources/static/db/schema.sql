@@ -21,7 +21,7 @@ create table `interestpoint` (
 	`detail` tinyint(1) COMMENT 'is there detail page: 0 - not, 1 - yes ',
 	`street_id` varchar(20) COMMENT 'street id',
 	`create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
-	`update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'update time' ON UPDATE CURRENT_TIMESTAMP,
+	`update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
 	PRIMARY KEY (`id`)
 );
 
@@ -33,11 +33,12 @@ create table `LOCATION_INTERESTPOINT` (
 	`location` varchar(20) NOT NULL COMMENT 'location with latitude and logitude',
 	`poi_id` varchar(20) NOT NULL COMMENT 'id in interest_point',
 	`poi_type` varchar(20) NOT NULL COMMENT 'type of poi',
+	`poi_location` varchar(20) NOT NULL COMMENT 'location of poi with latitude and logitude',
 	`poi_latitude` double(12) NOT NULL COMMENT 'latitude of interestPoint',
 	`poi_logitude` double(12) NOT NULL COMMENT 'logitude of interestPoint',
 	`radius` double(20) NOT NULL COMMENT 'radius within',
 	`distance` double(20) NOT NULL COMMENT 'distance between location and interestPoint',
 	`create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
-	`update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'update time' ON UPDATE CURRENT_TIMESTAMP,
+	`update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
 	PRIMARY KEY (`id`)
 );
