@@ -31,10 +31,10 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 	@Autowired
 	private InterestFinderDAO interestFinderDAO;
-	
+
 	@Value("${api.map.baidu.apikey}")
 	private String apiKey;
-	
+
 	public InterestPointEntity fetchPathPlan(String origin, String destination) {
 
 		PathPlanResponse response = pathPlanFeignClient.fetchDrivingPathPlan(origin, destination, apiKey);
@@ -78,7 +78,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 				return null;
 			}
 			List<InterestPoint> pois = InterestPointMapper.INSTANCE.toDtos(result.getResults());
-			interestFinderDAO.savePOIs(pois);
+			interestFinderDAO.saveAll(pois);
 		}
 		return domains;
 	}
