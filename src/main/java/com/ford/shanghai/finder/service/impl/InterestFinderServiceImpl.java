@@ -1,5 +1,6 @@
 package com.ford.shanghai.finder.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +26,6 @@ import com.ford.shanghai.finder.feign.response.SearchingResultResponse;
 import com.ford.shanghai.finder.feign.response.Step;
 import com.ford.shanghai.finder.mapper.InterestPointMapper;
 import com.ford.shanghai.finder.service.InterestFinderService;
-
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
@@ -67,33 +67,39 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 				.collect(Collectors.toList());
 
 		Set<String> locs = locations.stream().map(Location::toString).collect(Collectors.toSet());
+		Set<PointOfInterest> poisFromDB = queryFromDBAndAssembly(poiType, locs);
+		Set<PointOfInterest> poisFromFeign = queryFromFeignAndAssembly(poiType, locs);
+		List<PointOfInterest> poiResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
+		WaysidePOIsEntity waysidePOIs = new WaysidePOIsEntity();
+		waysidePOIs.setSearchingResults(poiResults);
+		return waysidePOIs;
+	}
 
-		Set<LocationInterestPoint> locationInterestPoints = locationInterestPointDAO.queryPOIsByLocs(poiType, locs);
-		Set<String> locsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getLocation).collect(Collectors.toSet());
-		
-		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, locsInDB);
-		Set<PointOfInterest> poisFromDB = InterestPointMapper.INSTANCE.toDomains(locPOIs);
-		SetView<String> locSetNotInDB = Sets.difference(locs,locsInDB);
 
-		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locSetNotInDB.stream().map(
+	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {
+		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locs.stream().map(
 					loc -> CompletableFuture.supplyAsync( () -> fetchPOIsByFeign(poiType, loc.toString())))
 				.collect(Collectors.toSet());
 
 		Set<PointOfInterest> poisFromFeign = searchingResultFutures.parallelStream()
 											.map(CompletableFuture::join)
 											.flatMap(list -> list.stream()).collect(Collectors.toSet());
+		return poisFromFeign;
+	}
 
-		List<PointOfInterest> searchingResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
-		WaysidePOIsEntity waysidePOIs = new WaysidePOIsEntity();
-		waysidePOIs.setSearchingResults(searchingResults);
-		return waysidePOIs;
+	private Set<PointOfInterest> queryFromDBAndAssembly(String poiType, Set<String> locs) {
+		Set<LocationInterestPoint> locationInterestPoints = locationInterestPointDAO.queryPOIsByLocs(poiType, locs);
+		Set<String> locsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getLocation).collect(Collectors.toSet());
+		locs.removeAll(locsInDB);
+		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, locsInDB);
+		Set<PointOfInterest> poisFromDB = InterestPointMapper.INSTANCE.toDomains(locPOIs);
+		return poisFromDB;
 	}
 
 	private List<PointOfInterest> mergeAndResolveSet(Set<PointOfInterest> poisFromDB,
 			Set<PointOfInterest> poisFromFeign) {
-
-		
-		return null;
+		SetView<PointOfInterest> mergedPoi = Sets.union(poisFromDB, poisFromFeign);
+		return new ArrayList<PointOfInterest>(mergedPoi);
 	}
 
 	private Set<PointOfInterest> fetchPOIsByFeign(String poiType, String loc) {
