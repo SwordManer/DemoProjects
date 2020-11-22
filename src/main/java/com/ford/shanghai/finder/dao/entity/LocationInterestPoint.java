@@ -1,6 +1,7 @@
 package com.ford.shanghai.finder.dao.entity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -20,10 +21,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "interestpoint")
+@Table(name = "location_interestpoint")
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterestPoint implements Serializable{
+public class LocationInterestPoint implements Serializable{
 
 	private static final long serialVersionUID = -3299616808519127354L;
 
@@ -34,38 +35,32 @@ public class InterestPoint implements Serializable{
 	@Column(name = "channel")
 	private String channel;
 	
-	@Column(name = "poi_type")
-	private String poiType;
+	@Column(name = "loc_latitude")
+	private BigDecimal locLatitude;
 
-	@Column(name = "id_in_channel")
-	private String uid;
-
-	@Column(name = "name")
-	private String name;
+	@Column(name = "loc_logitude")
+	private BigDecimal locLogitude;
 
 	@Column(name = "location")
 	private String location;
 
-	@Column(name = "address")
-	private String address;
+	@Column(name = "poi_id")
+	private String poiId;
 
-	@Column(name = "province")
-	private String province;
+	@Column(name = "poi_type")
+	private String poiType;
 
-	@Column(name = "city")
-	private String city;
+	@Column(name = "poiLatitude")
+	private BigDecimal poiLatitude;
 
-	@Column(name = "area")
-	private String area;
+	@Column(name = "poi_logitude")
+	private BigDecimal poiLogitude;
 
-	@Column(name = "street_id")
-	private String streetId;
+	@Column(name = "radius")
+	private BigDecimal radius;
 
-	@Column(name = "telephone")
-	private String telephone;
-
-	@Column(name = "detail")
-	private Integer detail;
+	@Column(name = "distance")
+	private BigDecimal distance;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = JAVA_DATE_TIME_FMT)
     @Column(name = "create_time", insertable = false, updatable = false)

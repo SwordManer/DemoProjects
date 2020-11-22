@@ -1,6 +1,7 @@
 package com.ford.shanghai.finder.mapper;
 
 import java.util.List;
+import java.util.Set;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -33,5 +34,5 @@ public interface InterestPointMapper {
 	})
 	public PointOfInterest toDomain(InterestPoint interestPoint);
 
-	public List<PointOfInterest> toDomains(List<InterestPoint> interestPoints);
+	public Set<PointOfInterest> toDomains(Set<InterestPoint> interestPoints);
 }

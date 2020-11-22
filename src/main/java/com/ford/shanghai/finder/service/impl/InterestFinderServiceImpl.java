@@ -1,7 +1,9 @@
 package com.ford.shanghai.finder.service.impl;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -9,8 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.ford.shanghai.finder.dao.InterestFinderDAO;
+import com.ford.shanghai.finder.dao.InterestPointDAO;
+import com.ford.shanghai.finder.dao.LocationInterestPointDAO;
 import com.ford.shanghai.finder.dao.entity.InterestPoint;
+import com.ford.shanghai.finder.dao.entity.LocationInterestPoint;
 import com.ford.shanghai.finder.entity.InterestPointEntity;
 import com.ford.shanghai.finder.entity.WaysidePOIsEntity;
 import com.ford.shanghai.finder.feign.PathPlanFeignClient;
@@ -21,6 +25,10 @@ import com.ford.shanghai.finder.feign.response.SearchingResultResponse;
 import com.ford.shanghai.finder.feign.response.Step;
 import com.ford.shanghai.finder.mapper.InterestPointMapper;
 import com.ford.shanghai.finder.service.InterestFinderService;
+
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+
 import static com.ford.shanghai.finder.utils.Constants.STATUS_SUCCESS;
 
 @Service
@@ -30,7 +38,10 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 	private PathPlanFeignClient pathPlanFeignClient;
 
 	@Autowired
-	private InterestFinderDAO interestFinderDAO;
+	private InterestPointDAO interestPointDAO;
+
+	@Autowired
+	private LocationInterestPointDAO locationInterestPointDAO;
 
 	@Value("${api.map.baidu.apikey}")
 	private String apiKey;
@@ -41,7 +52,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 		return null;
 	}
 
-	public WaysidePOIsEntity fetchPOI(String origin, String destination, String query) {
+	public WaysidePOIsEntity fetchPOI(String origin, String destination, String poiType) {
 
 		PathPlanResponse response = pathPlanFeignClient.fetchDrivingPathPlan(origin, destination, apiKey);
 		Integer status = Optional.of(response).map(PathPlanResponse::getStatus).get();
@@ -55,32 +66,46 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 				.map(Step::getStartLocation)
 				.collect(Collectors.toList());
 
-		List<CompletableFuture<List<PointOfInterest>>> searchingResultFutures = locations.stream().map(
-					loc -> CompletableFuture.supplyAsync( () -> fetchPOIByLocation(query, loc.toString())))
-				.collect(Collectors.toList());
+		Set<String> locs = locations.stream().map(Location::toString).collect(Collectors.toSet());
 
-		List<PointOfInterest> searchingResults = searchingResultFutures.parallelStream()
+		Set<LocationInterestPoint> locationInterestPoints = locationInterestPointDAO.queryPOIsByLocs(poiType, locs);
+		Set<String> locsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getLocation).collect(Collectors.toSet());
+		
+		Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, locsInDB);
+		Set<PointOfInterest> poisFromDB = InterestPointMapper.INSTANCE.toDomains(locPOIs);
+		SetView<String> locSetNotInDB = Sets.difference(locs,locsInDB);
+
+		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locSetNotInDB.stream().map(
+					loc -> CompletableFuture.supplyAsync( () -> fetchPOIsByFeign(poiType, loc.toString())))
+				.collect(Collectors.toSet());
+
+		Set<PointOfInterest> poisFromFeign = searchingResultFutures.parallelStream()
 											.map(CompletableFuture::join)
-											.flatMap(list -> list.stream()).collect(Collectors.toList());
+											.flatMap(list -> list.stream()).collect(Collectors.toSet());
+
+		List<PointOfInterest> searchingResults = mergeAndResolveSet(poisFromDB, poisFromFeign);
 		WaysidePOIsEntity waysidePOIs = new WaysidePOIsEntity();
 		waysidePOIs.setSearchingResults(searchingResults);
 		return waysidePOIs;
 	}
 
-	private List<PointOfInterest> fetchPOIByLocation(String query, String loc) {
-//		try to fetch the data from db:
-		List<InterestPoint> poisInDB = interestFinderDAO.queryPOIsByConditions(query, loc);
-		List<PointOfInterest> domains = InterestPointMapper.INSTANCE.toDomains(poisInDB);
+	private List<PointOfInterest> mergeAndResolveSet(Set<PointOfInterest> poisFromDB,
+			Set<PointOfInterest> poisFromFeign) {
 
-		if (poisInDB==null || poisInDB.isEmpty()) {
-			SearchingResultResponse result = pathPlanFeignClient.fetchSearchingResult(query, loc, "5000", "json", apiKey);
-			if (result==null||result.getStatus()!=STATUS_SUCCESS) {
-				return null;
-			}
-			List<InterestPoint> pois = InterestPointMapper.INSTANCE.toDtos(result.getResults());
-			interestFinderDAO.saveAll(pois);
+		
+		return null;
+	}
+
+	private Set<PointOfInterest> fetchPOIsByFeign(String poiType, String loc) {
+//		try to fetch the data from db:
+		SearchingResultResponse result = pathPlanFeignClient.fetchSearchingResult(poiType, loc, "5000", "json", apiKey);
+		if (result==null||result.getStatus()!=STATUS_SUCCESS) {
+			return null;
 		}
-		return domains;
+		List<PointOfInterest> pois = result.getResults();
+		List<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(result.getResults());
+		interestPointDAO.saveAll(interestPoints);
+		return new HashSet<PointOfInterest>(pois);
 	}
 
 	@Override
