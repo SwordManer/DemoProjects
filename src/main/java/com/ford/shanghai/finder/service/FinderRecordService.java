@@ -6,6 +6,6 @@ import com.ford.shanghai.finder.model.FinderRecordModel;
 
 public interface FinderRecordService {
 
-	public List<FinderRecordModel> fetchRecords();
+	public List<FinderRecordModel> fetchRecords() throws Exception;
 
 }

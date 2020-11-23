@@ -80,10 +80,11 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 	public WaysidePOIsEntity fetchPOI(String origin, String destination, String poiType) throws Exception {
 
+		log.info("Try to invocate the service of BaiduMap to fetch path plan while driving: poiType: {}", poiType);
 		PathPlanResponse response = pathPlanFeignClient.fetchDrivingPathPlan(origin, destination, apiKey);
 		if (response==null || response.getStatus()!=STATUS_SUCCESS) {
-
-			throw new FeignInvocationExcetion("error encountered while invocation by feign");
+			log.error("Response from the invocation by feign is not healthy");
+			throw new FeignInvocationExcetion("Invocation by feign is not healthy");
 		}
 
 		List<Location> locations = Optional.of(response.getResult()).get()
@@ -99,7 +100,6 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 		WaysidePOIsEntity waysidePOIs = new WaysidePOIsEntity();
 		waysidePOIs.setSearchingResults(poiResults);
-
 		CompletableFuture.runAsync(() -> recordQueryInformation(origin, destination, poiType), executor);
 		return waysidePOIs;
 	}
@@ -113,48 +113,55 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 			record.setEndLocation(destination);
 			finderRecordDAO.save(record);
 		} catch (Exception e) {
-			
-			
+			log.error("Error encountered while save the query record to DB.");
 		}
 	}
 
 	private Set<PointOfInterest> queryFromFeignAndAssembly(String poiType, Set<String> locs) {
 		if (poiType==null||locs==null||locs.isEmpty()) {
+			log.warn("The input locs or poiType is empty or invalid, pay attention if data not totally fetched from DB.");
 			return Collections.emptySet();
 		}
 
-		Set<CompletableFuture<Set<PointOfInterest>>> searchingResultFutures = locs.stream().map(
+		log.info("It is going to do the invocation by feign fetching pois, with the CompletableFuture style.");
+		Set<CompletableFuture<Set<PointOfInterest>>> resultFutures = locs.stream().map(
 					loc -> CompletableFuture.supplyAsync(()-> fetchPOIsByFeign(poiType, loc.toString()), executor))
 				.collect(Collectors.toSet());
 
-		Set<PointOfInterest> poisFromFeign = searchingResultFutures.parallelStream()
+		Set<PointOfInterest> poisFromFeign = resultFutures.parallelStream()
 											.map(CompletableFuture::join)
 											.flatMap(list -> list.stream()).collect(Collectors.toSet());
+		log.info("Complete the assembly process to the data from invocation by feign.");
 		return poisFromFeign;
 	}
 
 	private Set<PointOfInterest> queryFromDBAndAssembly(String poiType, Set<String> locs) {
 
 		if (poiType==null||locs==null||locs.isEmpty()) {
+			log.warn("Warn: the data fetched from DB is empty, pay attention if this is not the first invocation around the origin and destination.");
 			return Collections.emptySet();
 		}
-
+		Set<String> copyedLocs = locs.stream().collect(Collectors.toSet());
+		TransactionStatus transactionStatus = platformTransactionManager.getTransaction(transactionDefinition);
 		try {
 			Set<LocationInterestPoint> locationInterestPoints = locationInterestPointDAO.queryPOIsByLocs(poiType, locs);
 			Set<String> locsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getLocation).collect(Collectors.toSet());
 			Set<String> poiLocsInDB = locationInterestPoints.stream().map(LocationInterestPoint::getPoiLocation).collect(Collectors.toSet());
 			Set<InterestPoint> locPOIs = interestPointDAO.queryPOIsByLocs(poiType, poiLocsInDB);
 			locs.removeAll(locsInDB);
+			platformTransactionManager.commit(transactionStatus);
 			return InterestPointMapper.INSTANCE.toDomains(locPOIs);
 		} catch (Exception e) {
-			
+			log.error("Error encountered whild fetching locationInteresPoint and interestPoint data from DB before invocation by feign");
+			locs = copyedLocs.stream().collect(Collectors.toSet());
+			platformTransactionManager.rollback(transactionStatus);
 			return Collections.emptySet();
 		}
 	}
 
 	private List<PointOfInterest> mergeAndResolveSet(Set<PointOfInterest> poisFromDB, Set<PointOfInterest> poisFromFeign) throws EmptyDataSetException {
 		if (poisFromDB.isEmpty()&&poisFromFeign.isEmpty()) {
-			
+			log.error("Data set from DB and invocation by feign is empty");
 			throw new EmptyDataSetException("data set from DB and invocation by feign is empty");
 		}
 		SetView<PointOfInterest> mergedPoi = Sets.union(poisFromDB, poisFromFeign);
@@ -162,9 +169,9 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 	}
 
 	private Set<PointOfInterest> fetchPOIsByFeign(String poiType, String loc) {
-//		try to fetch the data from db:
 		RegionPOIResponse result = regionFinderClient.fetchPOIsInCircle(poiType, loc, "5000", FORMAT_JSON, apiKey);
 		if (result==null||result.getStatus()!=STATUS_SUCCESS) {
+			log.warn("Response is not healthy while invocating by feign: poiType: {}, loc: {}", poiType, loc);
 			return Collections.emptySet();
 		}
 		List<PointOfInterest> pois = result.getResults();
@@ -174,6 +181,7 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 
 	private void asyncUpData2DB(String poiType, String loc, List<PointOfInterest> pois) {
 
+		log.info("Entering into the async process to save the data of POIs from invocation to DB: poiType: {}, location: {}", poiType, loc);
 		TransactionStatus transactionStatus = platformTransactionManager.getTransaction(transactionDefinition);
 		try {
 			Set<InterestPoint> interestPoints = InterestPointMapper.INSTANCE.toDtos(new HashSet<>(pois));
@@ -203,9 +211,10 @@ public class InterestFinderServiceImpl implements InterestFinderService {
 			interestPointDAO.saveAll(interestPoints);
 			locationInterestPointDAO.saveAll(locIps);
 			platformTransactionManager.commit(transactionStatus);
+			log.info("Transaction committed after save POIs data successfully.");
 		} catch (Exception e) {
+			log.error("Error encountered while async data from POIs invocation to DB. The save operation is being rollbacked: poiType: {}, location: {}", poiType, loc);
 			platformTransactionManager.rollback(transactionStatus);
-//			TODO
 		}
 	}
 }

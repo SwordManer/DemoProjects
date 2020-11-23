@@ -26,12 +26,15 @@ public class POIFinderController extends AbstractController{
 	public Response<InterestPointResponse> fetchPointsOfInterest(@RequestBody POIRequest request) {
 
 		try {
+			log.info("Entering into the POIFinder service to fetch points of interest: query: {}, origin: {}, destination: {}", 
+					request.getQuery(), request.getOrigin(), request.getDestination());
 			WaysidePOIsEntity waysidePOIs = interestFinderService.fetchPOI(request.getOrigin(), request.getDestination(), request.getQuery());
 			InterestPointResponse response = new InterestPointResponse();
 			response.setInterestPoints(waysidePOIs.getSearchingResults());
+			log.info("Complete the process of fetching wayside pois successfully");
 			return Response.buildSuccess(response);
 		} catch (Exception e) {
-			log.error("Error encountered while fetch pois: ", e);
+			log.error("Error encountered while fetch pois.", e);
 			return Response.buildError(ResponseEnum.ERROR);
 		}
 	}
