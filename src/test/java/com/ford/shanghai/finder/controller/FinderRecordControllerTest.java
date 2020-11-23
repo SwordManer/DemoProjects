@@ -18,23 +18,21 @@ import com.ford.shanghai.finder.InterestFinderApplication;
 @AutoConfigureMockMvc
 public class FinderRecordControllerTest extends AbstractControllerTest{
 
-	private final static String FILE_SRC_PATH = "file/request/post/poifinder.json";
-
-	private final static String REQUEST_URL = "/path/driving/poi";
+	private final static String REQUEST_URL = "/records";
 
 	@Before
 	public void setMockMvc() {
-		setMvc(FILE_SRC_PATH);
+		setMvc(null);
 	}
 
-//	@Ignore
 	@Test
+	@Ignore
 	public void testFinderRecord() throws Exception {
-		testRequest(REQUEST_URL);
+		testGetRequest(REQUEST_URL);
 	}
 
 	@Autowired
-	public void setPOIFinderController(FinderRecordController finderRecordController) {
+	public void setController(FinderRecordController finderRecordController) {
 		this.controller = finderRecordController;
 	}
 }

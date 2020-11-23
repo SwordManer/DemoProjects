@@ -30,7 +30,7 @@ public class POIFinderControllerTest extends AbstractControllerTest{
 	@Ignore
 	@Test
 	public void testFetchPointsOfInterest() throws Exception {
-		testRequest(REQUEST_URL);
+		testPostRequest(REQUEST_URL);
 	}
 
 	@Autowired
