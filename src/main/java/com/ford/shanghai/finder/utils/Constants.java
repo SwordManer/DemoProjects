@@ -9,4 +9,8 @@ public class Constants {
 	public static final Integer STATUS_SUCCESS = 0;
 
 	public static final String CHANNEL_TYPE_BAIDUMAP = "BAIDUMAP";
+
+	public static final String FORMAT_JSON = "json";
+
+	public static final String FORMAT_XML = "xml";
 }

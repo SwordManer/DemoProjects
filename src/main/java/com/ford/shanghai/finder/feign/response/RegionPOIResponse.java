@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper=false)
-public class SearchingResultResponse extends BaseResponse{
+public class RegionPOIResponse extends BaseResponse{
 
 	@JsonProperty("result_type")
 	private String resultType;

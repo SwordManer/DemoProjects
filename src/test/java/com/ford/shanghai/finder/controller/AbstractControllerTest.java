@@ -35,6 +35,5 @@ public abstract class AbstractControllerTest {
 					.andReturn()
 					.getResponse()
 					.getContentAsString();
-		System.out.println(result);
 	}
 }

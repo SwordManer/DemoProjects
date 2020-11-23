@@ -1,6 +1,7 @@
 package com.ford.shanghai.finder.controller;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ public class POIFinderControllerTest extends AbstractControllerTest{
 		setMvc(FILE_SRC_PATH);
 	}
 
+	@Ignore
 	@Test
 	public void testFetchPointsOfInterest() throws Exception {
 		testRequest(REQUEST_URL);
